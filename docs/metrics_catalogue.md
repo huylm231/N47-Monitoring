@@ -409,6 +409,22 @@ Nếu truy vấn rỗng, kiểm tra tên metric trong ô Metrics explorer của 
 - TC-04 (dòng 9): dùng `count_over_time(up{job="node-exporter"}[1h])` và `up{job="node-exporter"} offset 10m`, restart bằng `docker compose restart prometheus` (không dùng `down -v`). Số series trong bộ nhớ trước restart: 1487 (prometheus_tsdb_head_series). Ảnh 13 chụp sau khi kiểm thử.
 - Nếu sau này đổi cấu hình Node Exporter (xem mục 7.2) thì phải đo lại dòng 4 đến 8.
 
+### 8.1 Baseline (cửa sổ 1 giờ, bước 1 phút)
+
+Đo từ 19:08 đến 19:16 ngày 03/11/2026 (giờ máy UTC+7), mỗi truy vấn cách nhau khoảng 1 phút; hệ thống ở trạng thái bình thường, chưa tạo tải thử nghiệm.
+
+| Chỉ số | Trung vị | p95 | Lớn nhất | Ảnh chụp |
+|---|---|---|---|---|
+| CPU % | 0.43 | 32.13 | 79.91 | 14-baseline-cpu-p50.png, 15-baseline-cpu-p95.png, 16-baseline-cpu-max.png |
+| RAM % | 11.96 | 12.10 | 12.17 | 17-baseline-ram-p50.png, 18-baseline-ram-p95.png, 19-baseline-ram-max.png |
+| Disk % đã dùng (/dev/sdd) | 7.607 | 7.608 | 7.608 | 20-baseline-disk-p50.png, 21-baseline-disk-p95.png, 22-baseline-disk-max.png |
+
+**Ghi chú baseline:**
+
+- CPU có chênh lệch lớn giữa trung vị (0.43%) và p95 (32.13%), cho thấy trong cửa sổ đo có các đợt CPU tăng ngắn. Chưa xác định nguyên nhân; cần đo lại ở khoảng thời gian không có thao tác trên hệ thống để so sánh.
+- Giá trị CPU lớn nhất (79.91%) sát ngưỡng Warning khởi điểm (80%). TV5 và TV6 cần cân nhắc khi hiệu chỉnh ngưỡng; alert có điều kiện `for 5m` nên các đợt tăng ngắn không kích hoạt.
+- Disk lấy từ `/dev/sdd` (đĩa ảo VM WSL2), đã gộp 3 series trùng bằng `max by (instance, device)`.
+- Baseline này đo trên cấu hình Node Exporter gốc (không mount rootfs).
 ---
 
 ## 9. Các điểm đang chờ Leader quyết định
@@ -433,3 +449,4 @@ Chi tiết xem `docs/tong-hop-bat-dong-tv3.md`. Tài liệu này sẽ cập nh�
 | 1.0 | Bản đầu: CPU, RAM, Disk, Network, Uptime, Target Status và biểu thức ngưỡng cơ bản |
 | 2.0 | Viết lại có dấu; bổ sung ánh xạ MET-01 đến MET-09, ngưỡng Critical, Disk Available, load, inode, cAdvisor và Blackbox (tùy chọn), truy vấn đánh giá cho TV6, baseline, trạng thái cảnh báo, kiểm tra lưu trữ; chuẩn hóa ngưỡng Disk theo dung lượng còn trống; bỏ mẫu `alert_rules.yml` (thuộc TV5); đổi cách gọi KPI và Alert theo tên |
 | 2.1 | Điền kết quả đo mục 3 (TC-05 đến TC-08); ghi chú giới hạn Disk, Network, Uptime; cập nhật mục 7.2 và 7.3 theo cấu hình compose hiện tại; xác minh đối tượng đo Disk và Network (/dev/sdd, eth0); bổ sung ảnh chụp; hoàn thành TC-04 (dữ liệu còn sau restart) |
+| 2.2 | Bổ sung baseline CPU, RAM, Disk (mục 8.1) |
