@@ -60,6 +60,8 @@ docker info
 
 Đảm bảo Docker Desktop đã khởi động và Docker Engine đang hoạt động.
 
+**Lưu ý kỹ thuật về môi trường Docker Desktop (Windows):**
+> Hệ thống giám sát triển khai trên Docker Desktop (Windows). Các chỉ số tài nguyên do Node Exporter thu thập sẽ phản ánh thông số của **máy ảo Linux (WSL2)** chạy bên trong Docker Desktop, chứ không trực tiếp đo máy tính Windows host thật.
 ## 5. Cấu trúc thư mục
 
 ```text
@@ -240,7 +242,7 @@ Tính phần trăm RAM đang sử dụng theo metric khả dụng:
 ### 9.4. Kiểm tra dung lượng ổ đĩa
 
 ```promql
-node_filesystem_avail_bytes
+100 * (1 - (node_filesystem_avail_bytes{fstype!~"tmpfs|overlay|squashfs|tracefs|nsfs"} / node_filesystem_size_bytes{fstype!~"tmpfs|overlay|squashfs|tracefs|nsfs"}))
 ```
 
 ### 9.5. Kiểm tra lưu lượng mạng
