@@ -5,10 +5,10 @@
 | Dự án | N4.7 – Xây dựng hệ thống giám sát máy chủ, Cloud và trung tâm dữ liệu |
 | Người phụ trách | TV3 – Nguyễn Thị Anh Thư (Backend Monitoring) |
 | Bàn giao cho | TV4 (Grafana), TV5 (Alert Rules), TV6 (Kiểm thử và KPI) |
-| Phiên bản tài liệu | 2.1 |
+| Phiên bản tài liệu | 2.2 |
 | Phiên bản phần mềm | Prometheus v3.5.0, Node Exporter v1.9.1, Grafana v12.1.0 |
 | Data source Grafana | `http://prometheus:9090` (kết nối nội bộ Docker); `http://localhost:9090` (trình duyệt trên máy host) |
-| Trạng thái kiểm tra | Cú pháp toàn bộ truy vấn đã kiểm tra bằng `promtool` 3.5.0. Các truy vấn mục 3 và kiểm tra lưu trữ (TC-04) đã chạy trên Prometheus của nhóm (kết quả ở mục 8, đo với cấu hình Node Exporter gốc). Các biểu thức ngưỡng (mục 5) **chưa chạy** |
+| Trạng thái kiểm tra | Cú pháp toàn bộ truy vấn đã kiểm tra bằng `promtool` 3.5.0. Các truy vấn mục 3 và kiểm tra lưu trữ (TC-04) đã chạy trên Prometheus của nhóm (kết quả ở mục 8, đo với cấu hình Node Exporter gốc). Cú pháp các biểu thức ngưỡng (mục 5) đã chạy kiểm tra trên Prometheus UI (mục 8.2); việc kiểm thử cảnh báo khi vượt ngưỡng **chưa thực hiện** (thuộc TV5) |
 
 ---
 
@@ -425,6 +425,43 @@ Nếu truy vấn rỗng, kiểm tra tên metric trong ô Metrics explorer của 
 - Giá trị CPU lớn nhất (79.91%) sát ngưỡng Warning khởi điểm (80%). TV5 và TV6 cần cân nhắc khi hiệu chỉnh ngưỡng; alert có điều kiện `for 5m` nên các đợt tăng ngắn không kích hoạt.
 - Disk lấy từ `/dev/sdd` (đĩa ảo VM WSL2), đã gộp 3 series trùng bằng `max by (instance, device)`.
 - Baseline này đo trên cấu hình Node Exporter gốc (không mount rootfs).
+
+### 8.2 Kiểm tra cú pháp biểu thức ngưỡng (mục 5)
+
+Chạy từng biểu thức mục 5.1 đến 5.4 tại `http://localhost:9090/graph` (tab Table), đo từ 20:22 đến 20:30 ngày 03/11/2026 (giờ máy UTC+7). Hệ thống ở trạng thái bình thường, chưa tạo tải thử nghiệm.
+
+| # | Biểu thức | Mục | Kết quả thực tế | Ảnh chụp |
+|---|---|---|---|---|
+| 1 | CPU trên 80% | 5.1 | Empty query result (không lỗi cú pháp) | 23-alert-cpu-warning.png |
+| 2 | CPU trên 90% | 5.1 | Empty query result | 24-alert-cpu-critical.png |
+| 3 | RAM trên 85% | 5.2 | Empty query result | 25-alert-ram-warning.png |
+| 4 | RAM trên 95% | 5.2 | Empty query result | 26-alert-ram-critical.png |
+| 5 | Disk còn trống dưới 15% | 5.3 | Empty query result | 27-alert-disk-warning.png |
+| 6 | Disk còn trống dưới 10% | 5.3 | Empty query result | 28-alert-disk-critical.png |
+| 7 | `up{job="node-exporter"} == 0` | 5.4 | Empty query result | 29-alert-node-exporter-down.png |
+| 8 | `up == 0` | 5.4 | Empty query result | 30-alert-target-down.png |
+
+**Ghi chú:**
+
+- Cả 8 biểu thức chạy được, không lỗi cú pháp. Kết quả rỗng là đúng vì hệ thống chưa vượt ngưỡng nào (mỗi biểu thức chỉ trả về series đang vi phạm).
+- Mới kiểm tra cú pháp và hành vi khi hệ thống bình thường. Việc đóng gói thành `alert_rules.yml` và kiểm thử cảnh báo khi vượt ngưỡng thuộc TV5.
+- Biểu thức `probe_success == 0` (Blackbox) chưa chạy vì Blackbox chưa được triển khai.
+- Các ảnh 23 đến 30 là ảnh kết quả truy vấn trên Prometheus UI, không phải ảnh cảnh báo đã kích hoạt.
+
+### 8.3 Scrape Success Rate (KPI-01)
+
+Truy vấn: `avg_over_time(up{job="node-exporter"}[<cửa sổ>]) * 100`
+
+| Cửa sổ | Thời điểm đo (giờ máy UTC+7) | Kết quả | Ảnh chụp |
+|---|---|---|---|
+| 3 giờ | 20:33 | 100% | 31-scrape-success-rate-3h.png |
+| 2 giờ | 20:34 | 100% | 32-scrape-success-rate-2h.png |
+
+**Ghi chú:**
+
+- Kết quả 100% nghĩa là mọi lần scrape của node-exporter trong cửa sổ đo đều thành công.
+- Cửa sổ 3 giờ bắt đầu sau lần restart Prometheus ở TC-04 (khoảng 17:00), nên không bao gồm khoảng gián đoạn lúc restart.
+- Hệ thống mới chạy hơn 3 giờ, chưa đủ 24 giờ như mục 6.1; cần đo lại với cửa sổ dài hơn khi nghiệm thu.
 ---
 
 ## 9. Các điểm đang chờ Leader quyết định
@@ -449,4 +486,4 @@ Chi tiết xem `docs/tong-hop-bat-dong-tv3.md`. Tài liệu này sẽ cập nh�
 | 1.0 | Bản đầu: CPU, RAM, Disk, Network, Uptime, Target Status và biểu thức ngưỡng cơ bản |
 | 2.0 | Viết lại có dấu; bổ sung ánh xạ MET-01 đến MET-09, ngưỡng Critical, Disk Available, load, inode, cAdvisor và Blackbox (tùy chọn), truy vấn đánh giá cho TV6, baseline, trạng thái cảnh báo, kiểm tra lưu trữ; chuẩn hóa ngưỡng Disk theo dung lượng còn trống; bỏ mẫu `alert_rules.yml` (thuộc TV5); đổi cách gọi KPI và Alert theo tên |
 | 2.1 | Điền kết quả đo mục 3 (TC-05 đến TC-08); ghi chú giới hạn Disk, Network, Uptime; cập nhật mục 7.2 và 7.3 theo cấu hình compose hiện tại; xác minh đối tượng đo Disk và Network (/dev/sdd, eth0); bổ sung ảnh chụp; hoàn thành TC-04 (dữ liệu còn sau restart) |
-| 2.2 | Bổ sung baseline CPU, RAM, Disk (mục 8.1) |
+| 2.2 | Bổ sung baseline CPU, RAM, Disk (mục 8.1); kiểm tra cú pháp biểu thức ngưỡng (mục 8.2); đo Scrape Success Rate (mục 8.3) |
