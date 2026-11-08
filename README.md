@@ -108,7 +108,17 @@ dir
 
 Đảm bảo thư mục hiện tại có file `docker-compose.yml`.
 
-### Bước 2: Kiểm tra cấu hình
+### Bước 2: Cấu hình tùy chọn
+
+Có thể tạo `.env` từ tệp mẫu để tùy chỉnh cổng, thời gian lưu metrics và thông tin đăng nhập Grafana:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Mở `.env`, đổi `GRAFANA_ADMIN_PASSWORD` trước khi triển khai. Nếu không tạo `.env`, Compose sử dụng các giá trị mặc định trong `docker-compose.yml`.
+
+### Bước 3: Kiểm tra cấu hình
 
 ```powershell
 docker compose config
@@ -116,7 +126,7 @@ docker compose config
 
 Nếu cấu hình hợp lệ, Docker Compose sẽ hiển thị cấu hình đã được phân tích.
 
-### Bước 3: Khởi chạy các dịch vụ
+### Bước 4: Khởi chạy các dịch vụ
 
 ```powershell
 docker compose up -d
@@ -124,7 +134,7 @@ docker compose up -d
 
 Lần triển khai đầu tiên có thể mất thời gian vì Docker cần tải các image.
 
-### Bước 4: Kiểm tra trạng thái container
+### Bước 5: Kiểm tra trạng thái container
 
 ```powershell
 docker compose ps
@@ -132,15 +142,15 @@ docker compose ps
 
 Các container cần có:
 
-| Container           | Cổng | Chức năng                    |
-| ------------------- | ---: | ---------------------------- |
-| `n47-prometheus`    | 9090 | Thu thập và truy vấn metrics |
-| `n47-node-exporter` | 9100 | Cung cấp metrics hệ thống    |
-| `n47-grafana`       | 3000 | Dashboard giám sát           |
+| Dịch vụ             | Cổng mặc định | Chức năng                    |
+| ------------------- | ------------: | ---------------------------- |
+| `prometheus`        | 9090          | Thu thập và truy vấn metrics |
+| `node-exporter`     | 9100          | Cung cấp metrics hệ thống    |
+| `grafana`           | 3000          | Dashboard giám sát           |
 
-Trạng thái `Up` cho biết container đang chạy. Cần kiểm tra thêm endpoint và trạng thái target để xác nhận hệ thống giám sát hoạt động bình thường.
+Compose chờ Prometheus sẵn sàng trước khi khởi chạy Grafana. Cột trạng thái health trong `docker compose ps` cho biết các dịch vụ đã vượt qua healthcheck hay chưa; cần kiểm tra thêm trạng thái target để xác nhận hệ thống giám sát hoạt động bình thường.
 
-### Bước 5: Kiểm tra log khi có lỗi
+### Bước 6: Kiểm tra log khi có lỗi
 
 Xem log của toàn bộ dịch vụ:
 
@@ -173,7 +183,7 @@ Sau khi các container khởi động thành công, truy cập các địa chỉ
 Theo cấu hình lab hiện tại:
 
 - Username: `admin`
-- Password: `admin12345`
+- Password: giá trị `GRAFANA_ADMIN_PASSWORD` trong `.env`; nếu không có `.env`, mặc định là `admin12345`.
 
 Đây là thông tin đăng nhập dành cho môi trường thử nghiệm. Không sử dụng mật khẩu này trong môi trường production.
 
