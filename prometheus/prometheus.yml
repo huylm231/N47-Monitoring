@@ -45,9 +45,10 @@ scrape_configs:
   # ---------------------------------------------------------------------------
 
   # ---- cAdvisor: metric container ----
-  # - job_name: "cadvisor"
-  #   static_configs:
-  #     - targets: ["cadvisor:8080"]
+  - job_name: "cadvisor"
+    scrape_interval: 15s
+    static_configs:
+      - targets: ["cadvisor:8080"]
 
   # ---- Blackbox Exporter: probe HTTP/HTTPS endpoint ----
   # - job_name: "blackbox"

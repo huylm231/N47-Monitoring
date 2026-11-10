@@ -13,6 +13,7 @@ services:
       - prometheus_data:/prometheus
     depends_on:
       - node-exporter
+      - cadvisor
     healthcheck:
       test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:9090/-/healthy"]
       interval: 30s
@@ -29,6 +30,22 @@ services:
       - "${NODE_EXPORTER_PORT:-9100}:9100"
     security_opt:
       - no-new-privileges:true
+    restart: unless-stopped
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    container_name: cadvisor
+    ports:
+      - "${CADVISOR_PORT:-8080}:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    privileged: true
+    devices:
+      - /dev/kmsg
     restart: unless-stopped
 
   grafana:
