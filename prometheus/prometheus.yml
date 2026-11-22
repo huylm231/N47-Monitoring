@@ -18,7 +18,6 @@ global:
 # Nếu thiếu dòng này, Prometheus không nạp rule nào và không báo lỗi.
 # -----------------------------------------------------------------------------
 rule_files:
-  - "/etc/prometheus/rules/alert_rules.yml"
   - "rules/*.yml"
 
 # -----------------------------------------------------------------------------
