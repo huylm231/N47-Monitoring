@@ -10,6 +10,24 @@ groups:
           summary: "CPU usage is high on {{ $labels.instance }}"
           description: "CPU usage has exceeded 80% (current value: {{ $value }}%)"
 
+      - alert: HostCPUHighCritical
+        expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 90
+        for: 5m
+        labels: 
+          severity: critical
+        annotations:
+          summary: "Host CPU high critical (instance {{ $labels.instance }})"
+          description: "CPU usage is above 90% for more than 5 minutes."
+
+      - alert: HostMemoryHighWaring
+        expr: 100 * (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Host high memory usage (instance {{$labels.instance }})"
+          description: "RAM usage is above 85% (current value is {{ $value }}%)"
+      
       - alert: HostOutOfDiskSpace
         expr: (node_filesystem_avail_bytes{mountpoint="/",fstype!~"tmpfs|fuse.lxcfs"} / node_filesystem_size_bytes{mountpoint="/",fstype!~"tmpfs|fuse.lscfs"}) * 100 < 15
         for: 1m
