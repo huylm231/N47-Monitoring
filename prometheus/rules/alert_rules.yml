@@ -45,3 +45,38 @@ groups:
         annotations:
           summary: "Node Exporter is down"
           description: "Target node-exporter has been unreachable for me more than 1 minute."  
+      - alert: HostMemoryHighCritical
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 95
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Host memory high critical (instance {{ $labels.instance }})"
+          description: "RAM used > 95% liên tục trong 5 phút. Nguy cơ OOM cao, cần giải phóng hoặc giới hạn workload."
+
+      - alert: HostDiskLowCritical
+        expr: node_filesystem_free_bytes{mountpoint="/",fstype!~"tmpfs|fuse.lxcfs"} / node_filesystem_size_bytes{mountpoint="/",fstype!~"tmpfs|fuse.lxcfs"} * 100 < 10
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Host disk low critical (instance {{ $labels.instance }})"
+          description: "Dung lượng đĩa trống < 10% liên tục 2 phút. Cần dừng tác vụ ghi thử nghiệm và giải phóng dữ liệu."
+
+      - alert: EndpointDown
+        expr: probe_success == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Endpoint down (instance {{ $labels.instance }})"
+          description: "Service/Endpoint không phản hồi (probe_success = 0) liên tục trong 1 phút."
+
+      - alert: ContainerMemoryHigh
+        expr: container_memory_working_set_bytes{container!=""} / container_spec_memory_limit_bytes{container!=""} * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Container memory high (container {{ $labels.container }})"
+          description: "Working set / memory limit của container > 90% liên tục trong 5 phút."   
