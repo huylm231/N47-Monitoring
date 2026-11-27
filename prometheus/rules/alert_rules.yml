@@ -5,7 +5,7 @@ groups:
         expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
         for: 1m
         labels:
-          severiry: warning
+          severity: warning
         annotations:
           summary: "CPU usage is high on {{ $labels.instance }}"
           description: "CPU usage has exceeded 80% (current value: {{ $value }}%)"
@@ -19,17 +19,17 @@ groups:
           summary: "Host CPU high critical (instance {{ $labels.instance }})"
           description: "CPU usage is above 90% for more than 5 minutes."
 
-      - alert: HostMemoryHighWaring
-        expr: 100 * (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) > 85
-        for: 5m
+      - alert: HostMemoryHighWarning
+        expr: 100 * (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) > 70
+        for: 2m
         labels:
           severity: warning
         annotations:
           summary: "Host high memory usage (instance {{$labels.instance }})"
           description: "RAM usage is above 85% (current value is {{ $value }}%)"
-      
+
       - alert: HostOutOfDiskSpace
-        expr: (node_filesystem_avail_bytes{mountpoint="/",fstype!~"tmpfs|fuse.lxcfs"} / node_filesystem_size_bytes{mountpoint="/",fstype!~"tmpfs|fuse.lscfs"}) * 100 < 15
+        expr: (node_filesystem_avail_bytes{device="/dev/sda3"} / node_filesystem_size_bytes{device="/dev/sda3"}) * 100 < 15
         for: 1m
         labels:
           severity: critical
@@ -41,13 +41,14 @@ groups:
         expr: up{job="node-exporter"} == 0
         for: 1m
         labels:
-          severiry: critical
+          severity: critical
         annotations:
           summary: "Node Exporter is down"
           description: "Target node-exporter has been unreachable for me more than 1 minute."  
+
       - alert: HostMemoryHighCritical
-        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 95
-        for: 5m
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 72
+        for: 2m
         labels:
           severity: critical
         annotations:
@@ -55,7 +56,7 @@ groups:
           description: "RAM used > 95% liên tục trong 5 phút. Nguy cơ OOM cao, cần giải phóng hoặc giới hạn workload."
 
       - alert: HostDiskLowCritical
-        expr: node_filesystem_free_bytes{mountpoint="/",fstype!~"tmpfs|fuse.lxcfs"} / node_filesystem_size_bytes{mountpoint="/",fstype!~"tmpfs|fuse.lxcfs"} * 100 < 10
+        expr: node_filesystem_free_bytes{device="dev/sda3"} / node_filesystem_size_bytes{device="/dev/sda3"} * 100 < 10
         for: 2m
         labels:
           severity: critical
@@ -74,7 +75,7 @@ groups:
 
       - alert: ContainerMemoryHigh
         expr: container_memory_working_set_bytes{container!=""} / container_spec_memory_limit_bytes{container!=""} * 100 > 90
-        for: 5m
+        for: 2m
         labels:
           severity: warning
         annotations:
