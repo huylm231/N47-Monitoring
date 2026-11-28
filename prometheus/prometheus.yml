@@ -69,4 +69,4 @@ scrape_configs:
   alerting:
   alertmanagers:
     - static_configs:
-        - targets: ['localhost:9093']
+        - targets: ['172.17.0.1:9093']
