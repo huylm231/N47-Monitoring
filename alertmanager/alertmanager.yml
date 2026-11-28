@@ -1,0 +1,14 @@
+global:
+  resolve_timeout: 5m
+
+route:
+  group_by: ['alertname', 'job']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  receiver: 'default-receiver'
+receivers:
+- name: 'default-receiver'
+# Bạn có thể thay bằng cấu hình webhook, telegram_configs hoặc email_configs thực tế của nhóm
+  webhook_configs:
+  - url: 'http://127.0.0.1:5000/' # Endpoint nhận thông báo giả lập hoặc bot của nhóm
